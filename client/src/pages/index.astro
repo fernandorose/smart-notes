@@ -1,0 +1,223 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="SmartNote">
+  <main>
+    <section class="title">
+      <span>Fernando Rodriguez</span>
+      <h1>SmartNote</h1>
+      <p>Notes classification with AI</p>
+    </section>
+    <div class="notes">
+      <section class="note-container">
+        <article
+          class="note"
+          contenteditable="true"
+          data-placeholder="Escribe aquí..."
+        >
+        </article>
+      </section>
+      <section class="class-container">
+        <span id="classificationResult">La nota esta vacia</span>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { io, Socket } from "socket.io-client";
+  // Establece la conexión WebSocket con el servidor Flask
+  const socket: Socket = io("http://localhost:5000"); // Ajusta la URL si es necesario
+
+  // Obtener el div editable
+  const editableDiv = document.querySelector(".note") as HTMLDivElement | null;
+  const resultSpan = document.querySelector(
+    "#classificationResult"
+  ) as HTMLSpanElement | null; // El span donde mostraremos el resultado
+
+  if (editableDiv) {
+    // Detectar cambios en el contenido del artículo
+    editableDiv.addEventListener("input", () => {
+      // Enviar el contenido de la nota al servidor para clasificarla
+      const nota: string = editableDiv.textContent || "";
+      socket.emit("clasificar_nota", { nota });
+    });
+  } else {
+    console.error("No se encontró el elemento .note");
+  }
+
+  const classContainer = document.querySelector(
+    ".class-container"
+  ) as HTMLDivElement | null;
+  const spanElement = document.querySelector(
+    ".class-container span"
+  ) as HTMLSpanElement | null;
+
+  socket.on(
+    "resultado_clasificacion",
+    (data: { categoria: string; confianza: number[] }) => {
+      console.log("Categoría:", data.categoria);
+      console.log("Confianza:", data.confianza);
+
+      if (spanElement && classContainer) {
+        // Mostrar la categoría en el span
+        spanElement.textContent = `${data.categoria}`;
+
+        // Activar la animación si hay contenido
+        if (data.categoria) {
+          classContainer.classList.add("active");
+        }
+      }
+    }
+  );
+
+  // Restablecer el fondo si no hay categoría
+  socket.on("error", (error: { error: string }) => {
+    console.error("Error:", error.error);
+
+    if (spanElement && classContainer) {
+      // Vaciar el contenido del span
+      spanElement.textContent = "La nota esta vacia";
+
+      // Quitar la clase activa para desactivar la animación
+      classContainer.classList.remove("active");
+    }
+  });
+</script>
+
+<style>
+  main {
+    width: 100%;
+    height: 100dvh;
+    display: grid;
+    place-content: center;
+    place-items: center;
+  }
+  .title {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 50px;
+  }
+  .title span {
+    background: linear-gradient(180deg, #4ab8e4 0%, #143680 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  .title p {
+    font-size: 1rem;
+    background: linear-gradient(180deg, #acacac 0%, #646464 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 white);
+  }
+  .title h1 {
+    font-size: 5rem;
+    letter-spacing: -0.2rem;
+    font-weight: 800;
+    background: linear-gradient(180deg, #5a5a5a 0%, #000000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    filter: drop-shadow(0 1px 5px rgb(153, 153, 153));
+  }
+  .note-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .note {
+    border: solid 1px #fff;
+    padding: 10px;
+    border-radius: 10px;
+
+    background: radial-gradient(
+      48.33% 135.42% at 50% 0%,
+      #f0f0f0 0%,
+      #e9e9e9 100%
+    );
+
+    word-wrap: normal; /* Rompe palabras largas */
+    overflow: hidden; /* Oculta scroll */
+    position: relative; /* Para el pseudo-elemento */
+    outline: none;
+    color: #292929;
+    width: 500px;
+    height: 65px;
+    box-shadow: 0 2px 10px #b6b6b6;
+    font-size: 2rem;
+    font-family: "jetbrains mono variable";
+    font-weight: 400;
+  }
+  .note::before {
+    content: attr(data-placeholder); /* El contenido del placeholder */
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: #aaa; /* Color del placeholder */
+    pointer-events: none; /* No interactúa con el usuario */
+    visibility: visible; /* Visible por defecto */
+    font-family: "jetbrains mono variable";
+  }
+  .note:focus::before,
+  .note:not(:empty)::before {
+    visibility: hidden; /* Oculta el placeholder si hay texto o está enfocado */
+  }
+  .notes {
+    display: flex;
+    gap: 20px;
+  }
+  .class-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    max-height: 65px;
+    height: 60px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    background: black; /* Fondo predeterminado */
+    color: white;
+    font-size: 2rem;
+    transition: background 0.5s ease; /* Transición suave al cambiar el fondo */
+  }
+
+  /* Animación solo cuando la categoría está presente */
+  .class-container.active {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 2s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  .class-container.active::after {
+    content: "";
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    background: inherit;
+    filter: blur(20px) saturate(200%);
+    z-index: -1;
+  }
+</style>
