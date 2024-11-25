@@ -1,0 +1,68 @@
+node_modules
+
+# Archivos de entornos virtuales
+venv/
+.env/
+*.env
+
+# Archivos compilados de Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Configuración del editor/IDE
+.vscode/
+.idea/
+
+# Configuración de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de paquetes
+*.egg
+*.egg-info/
+dist/
+build/
+*.wheel
+
+# Archivos de prueba de cobertura
+htmlcov/
+.coverage
+.tox/
+.cache/
+
+# Logs
+*.log
+
+# Archivos de Jupyter
+.ipynb_checkpoints/
+
+# Configuración de depuración
+.pytest_cache/
+debug.log
+
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
